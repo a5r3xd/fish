@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Swimming Fish</title>
+<style>
+    body {
+        margin: 0;
+        overflow: hidden;
+        background-color: #87CEEB;
+    }
+
+    .fish {
+        position: absolute;
+        width: 80px;
+        cursor: pointer;
+        user-select: none;
+        transition: transform 0.1s;
+    }
+
+    .fish:hover {
+        transform: scale(1.1);
+    }
+</style>
+</head>
+<body>
+
+<script>
+function spawnFish() {
+    const fish = document.createElement("img");
+    fish.src = "baby_bluefin.png";
+    fish.className = "fish";
+
+    const fromLeft = Math.random() < 0.5;
+
+    // Vertical position
+    const y = Math.random() * (window.innerHeight - 80);
+    fish.style.top = y + "px";
+
+    // Speed (pixels per frame)
+    const speed = 1 + Math.random() * 2;
+
+    let x;
+
+    if (fromLeft) {
+        x = -80;
+        fish.style.transform = "scaleX(1)";
+    } else {
+        x = window.innerWidth;
+        fish.style.transform = "scaleX(-1)";
+    }
+
+    fish.style.left = x + "px";
+
+    // Click to delete
+    fish.onclick = () => {
+        fish.remove();
+    };
+
+    document.body.appendChild(fish);
+
+    function move() {
+        if (!document.body.contains(fish)) return;
+
+        if (fromLeft) {
+            x += speed;
+            if (x > window.innerWidth) {
+                fish.remove();
+                return;
+            }
+        } else {
+            x -= speed;
+            if (x < -80) {
+                fish.remove();
+                return;
+            }
+        }
+
+        fish.style.left = x + "px";
+        requestAnimationFrame(move);
+    }
+
+    move();
+}
+
+// Spawn fish every second
+setInterval(spawnFish, 1000);
+</script>
+
+</body>
+</html>
