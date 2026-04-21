@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Swimming Fish</title>
+
 <style>
     body {
         margin: 0;
@@ -17,24 +18,39 @@
         user-select: none;
     }
 
+    /* HP frame */
     .hp-container {
         position: absolute;
         width: 60px;
         height: 8px;
-        border: 1px solid rgba(0,0,0,0.6);
+        border: 1px solid black;
         border-radius: 6px;
-        background: rgba(255,255,255,0.4);
+        background: black;
         overflow: hidden;
     }
 
+    /* red delayed damage bar */
+    .hp-back {
+        position: absolute;
+        height: 100%;
+        width: 100%;
+        background: #e74c3c;
+        border-radius: 6px;
+        transition: width 0.25s ease;
+    }
+
+    /* real HP (green) */
     .hp-fill {
+        position: absolute;
         height: 100%;
         width: 100%;
         background: #2ecc71;
         border-radius: 6px;
+        transition: width 0.08s linear;
     }
 </style>
 </head>
+
 <body>
 
 <script>
@@ -46,13 +62,21 @@ function spawnFish() {
     const hpBar = document.createElement("div");
     hpBar.className = "hp-container";
 
+    const hpBack = document.createElement("div");
+    hpBack.className = "hp-back";
+
     const hpFill = document.createElement("div");
     hpFill.className = "hp-fill";
+
+    hpBar.appendChild(hpBack);
     hpBar.appendChild(hpFill);
 
     let hp = 5;
     const mh = 5;
     const rs = 2;
+
+    let displayHp = hp; // smooth green
+    let backHp = hp;    // red lag bar
 
     const fromLeft = Math.random() < 0.5;
 
@@ -62,28 +86,23 @@ function spawnFish() {
     fish.style.top = y + "px";
     fish.style.left = x + "px";
 
-    hpBar.style.left = (x + 10) + "px";
-    hpBar.style.top = (y + 85) + "px";
-
     fish.style.transform = fromLeft ? "scaleX(-1)" : "scaleX(1)";
-
-    fish.onclick = () => {
-        hp -= 1;
-
-        if (hp <= 0) {
-            fish.remove();
-            hpBar.remove();
-        } else {
-            hpFill.style.width = (hp / mh) * 100 + "%";
-        }
-    };
 
     document.body.appendChild(fish);
     document.body.appendChild(hpBar);
 
+    fish.onclick = () => {
+        hp -= 1;
+        if (hp <= 0) {
+            fish.remove();
+            hpBar.remove();
+        }
+    };
+
     function move() {
         if (!document.body.contains(fish)) return;
 
+        // speed formula
         const s = rs * (hp / mh) + (0.15 * rs);
 
         if (fromLeft) {
@@ -104,7 +123,16 @@ function spawnFish() {
 
         fish.style.left = x + "px";
 
-        // keep HP bar under fish
+        // smooth HP animation
+        displayHp += (hp - displayHp) * 0.15; // green follows fast
+        backHp += (hp - backHp) * 0.05;       // red lags slower
+
+        const greenW = (displayHp / mh) * 100;
+        const redW = (backHp / mh) * 100;
+
+        hpFill.style.width = greenW + "%";
+        hpBack.style.width = redW + "%";
+
         hpBar.style.left = (x + 10) + "px";
         hpBar.style.top = (y + 85) + "px";
 
