@@ -5,56 +5,57 @@
 <title>Swimming Fish</title>
 
 <style>
-    body {
-        margin: 0;
-        overflow: hidden;
-        background-color: #87CEEB;
-    }
+body {
+    margin: 0;
+    overflow: hidden;
+    background-color: #87CEEB;
+}
 
-    .fish {
-        position: absolute;
-        width: 80px;
-        cursor: pointer;
-        user-select: none;
-    }
+.fish {
+    position: absolute;
+    cursor: pointer;
+    user-select: none;
+}
 
-    /* HP frame */
-    .hp-container {
-        position: absolute;
-        width: 60px;
-        height: 4px;
-        border: 1px solid black;
-        border-radius: 6px;
-        background: black;
-        overflow: hidden;
-    }
+.fish-name {
+    position: absolute;
+    font-size: 10px;
+    color: black;
+    font-family: Arial, sans-serif;
+    pointer-events: none;
+}
 
-    /* red delayed damage bar */
-    .hp-back {
-        position: absolute;
-        height: 100%;
-        width: 100%;
-        background: #e74c3c;
-        border-radius: 6px;
-        transition: width 0.25s ease;
-    }
+.hp-container {
+    position: absolute;
+    width: 60px;
+    height: 3px;
+    border: 1px solid black;
+    border-radius: 3px;
+    background: black;
+    overflow: hidden;
+}
 
-    /* real HP (green) */
-    .hp-fill {
-        position: absolute;
-        height: 100%;
-        width: 100%;
-        background: #2ecc71;
-        border-radius: 6px;
-        transition: width 0.08s linear;
-    }
+.hp-back {
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    background: #e74c3c;
+}
+
+.hp-fill {
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    background: #2ecc71;
+}
 </style>
 </head>
 
 <body>
 
 <script>
-function spawnFish() {
+function createFish(x, y, size, hp, rs, modifiers = []) {
+
     const fish = document.createElement("img");
     fish.src = "images/baby_bluefin.png";
     fish.className = "fish";
@@ -71,38 +72,67 @@ function spawnFish() {
     hpBar.appendChild(hpBack);
     hpBar.appendChild(hpFill);
 
-    let hp = 5;
-    const mh = 5;
-    const rs = 2;
+    const nameTag = document.createElement("div");
+    nameTag.className = "fish-name";
 
-    let displayHp = hp; // smooth green
-    let backHp = hp;    // red lag bar
+    const mh = hp;
+
+    let displayHp = hp;
+    let backHp = hp;
 
     const fromLeft = Math.random() < 0.5;
 
-    let y = Math.random() * (window.innerHeight - 80);
-    let x = fromLeft ? -80 : window.innerWidth;
+    fish.style.width = size + "px";
 
     fish.style.top = y + "px";
     fish.style.left = x + "px";
-
     fish.style.transform = fromLeft ? "scaleX(-1)" : "scaleX(1)";
 
     document.body.appendChild(fish);
     document.body.appendChild(hpBar);
+    document.body.appendChild(nameTag);
+
+    // 🏷️ NAME SORTING
+    const sortedMods = [...modifiers].sort();
+    const name = (sortedMods.length ? sortedMods.join(" ") + " " : "") + "Baby Bluefin";
+    nameTag.innerText = name;
+
+    let alive = true;
 
     fish.onclick = () => {
+        if (!alive) return;
+
         hp -= 1;
+
         if (hp <= 0) {
+            alive = false;
+
+            // ✂️ SPLITTER LOGIC
+            if (modifiers.includes("giant") && modifiers.includes("splitter")) {
+
+                for (let i = 0; i < 2; i++) {
+                    const newMods = modifiers.filter(m => m !== "giant" && m !== "splitter");
+
+                    createFish(
+                        x + Math.random() * 30,
+                        y + Math.random() * 30,
+                        size / 2,
+                        Math.max(1, Math.floor(mh * 0.2)),
+                        rs * 1.5,
+                        newMods
+                    );
+                }
+            }
+
             fish.remove();
             hpBar.remove();
+            nameTag.remove();
         }
     };
 
     function move() {
         if (!document.body.contains(fish)) return;
 
-        // speed formula
         const s = rs * (hp / mh) + (0.15 * rs);
 
         if (fromLeft) {
@@ -110,31 +140,32 @@ function spawnFish() {
             if (x > window.innerWidth) {
                 fish.remove();
                 hpBar.remove();
+                nameTag.remove();
                 return;
             }
         } else {
             x -= s;
-            if (x < -80) {
+            if (x < -size) {
                 fish.remove();
                 hpBar.remove();
+                nameTag.remove();
                 return;
             }
         }
 
         fish.style.left = x + "px";
 
-        // smooth HP animation
-        displayHp += (hp - displayHp) * 0.15; // green follows fast
-        backHp += (hp - backHp) * 0.05;       // red lags slower
+        displayHp += (hp - displayHp) * 0.375;
+        backHp += (hp - backHp) * 0.125;
 
-        const greenW = (displayHp / mh) * 100;
-        const redW = (backHp / mh) * 100;
+        hpFill.style.width = (displayHp / mh) * 100 + "%";
+        hpBack.style.width = (backHp / mh) * 100 + "%";
 
-        hpFill.style.width = greenW + "%";
-        hpBack.style.width = redW + "%";
+        hpBar.style.left = (x + size * 0.2) + "px";
+        hpBar.style.top = (y + size + 18) + "px";
 
-        hpBar.style.left = (x + 10) + "px";
-        hpBar.style.top = (y + 85) + "px";
+        nameTag.style.left = (x + size * 0.2) + "px";
+        nameTag.style.top = (y + size - 10) + "px";
 
         requestAnimationFrame(move);
     }
@@ -142,7 +173,34 @@ function spawnFish() {
     move();
 }
 
-// spawn 1 fish every 5 seconds
+function spawnFish() {
+
+    let size = 80;
+    let rs = 2;
+    let mh = 5;
+    let modifiers = [];
+
+    // 🧬 GIANT (1 in 5)
+    if (Math.floor(Math.random() * 5) === 0) {
+        modifiers.push("Giant");
+        size *= 2;
+        rs *= 0.5;
+        mh *= 5;
+
+        // ✂️ SPLITTER (1 in 5 giant fish)
+        if (Math.floor(Math.random() * 5) === 0) {
+            modifiers.push("Splitter");
+        }
+    }
+
+    const fromLeft = Math.random() < 0.5;
+
+    const x = fromLeft ? -size : window.innerWidth;
+    const y = Math.random() * (window.innerHeight - size);
+
+    createFish(x, y, size, mh, rs, modifiers);
+}
+
 setInterval(spawnFish, 5000);
 </script>
 
