@@ -44,10 +44,10 @@ function spawnFish() {
 
     if (fromLeft) {
         x = -80;
-        fish.style.transform = "scaleX(1)";
+        fish.style.transform = "scaleX(-1)";
     } else {
         x = window.innerWidth;
-        fish.style.transform = "scaleX(-1)";
+        fish.style.transform = "scaleX(1)";
     }
 
     fish.style.left = x + "px";
