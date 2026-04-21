@@ -15,11 +15,23 @@
         width: 80px;
         cursor: pointer;
         user-select: none;
-        transition: transform 0.1s;
     }
 
-    .fish:hover {
-        transform: scale(1.1);
+    .hp-container {
+        position: absolute;
+        width: 60px;
+        height: 8px;
+        border: 1px solid rgba(0,0,0,0.6);
+        border-radius: 6px;
+        background: rgba(255,255,255,0.4);
+        overflow: hidden;
+    }
+
+    .hp-fill {
+        height: 100%;
+        width: 100%;
+        background: #2ecc71;
+        border-radius: 6px;
     }
 </style>
 </head>
@@ -31,60 +43,79 @@ function spawnFish() {
     fish.src = "images/baby_bluefin.png";
     fish.className = "fish";
 
+    const hpBar = document.createElement("div");
+    hpBar.className = "hp-container";
+
+    const hpFill = document.createElement("div");
+    hpFill.className = "hp-fill";
+    hpBar.appendChild(hpFill);
+
+    let hp = 5;
+    const mh = 5;
+    const rs = 2;
+
     const fromLeft = Math.random() < 0.5;
 
-    // Vertical position
-    const y = Math.random() * (window.innerHeight - 80);
+    let y = Math.random() * (window.innerHeight - 80);
+    let x = fromLeft ? -80 : window.innerWidth;
+
     fish.style.top = y + "px";
-
-    // Speed (pixels per frame)
-    const speed = 1 + Math.random() * 2;
-
-    let x;
-
-    if (fromLeft) {
-        x = -80;
-        fish.style.transform = "scaleX(-1)";
-    } else {
-        x = window.innerWidth;
-        fish.style.transform = "scaleX(1)";
-    }
-
     fish.style.left = x + "px";
 
-    // Click to delete
+    hpBar.style.left = (x + 10) + "px";
+    hpBar.style.top = (y + 85) + "px";
+
+    fish.style.transform = fromLeft ? "scaleX(-1)" : "scaleX(1)";
+
     fish.onclick = () => {
-        fish.remove();
+        hp -= 1;
+
+        if (hp <= 0) {
+            fish.remove();
+            hpBar.remove();
+        } else {
+            hpFill.style.width = (hp / mh) * 100 + "%";
+        }
     };
 
     document.body.appendChild(fish);
+    document.body.appendChild(hpBar);
 
     function move() {
         if (!document.body.contains(fish)) return;
 
+        const s = rs * (hp / mh) + (0.15 * rs);
+
         if (fromLeft) {
-            x += speed;
+            x += s;
             if (x > window.innerWidth) {
                 fish.remove();
+                hpBar.remove();
                 return;
             }
         } else {
-            x -= speed;
+            x -= s;
             if (x < -80) {
                 fish.remove();
+                hpBar.remove();
                 return;
             }
         }
 
         fish.style.left = x + "px";
+
+        // keep HP bar under fish
+        hpBar.style.left = (x + 10) + "px";
+        hpBar.style.top = (y + 85) + "px";
+
         requestAnimationFrame(move);
     }
 
     move();
 }
 
-// Spawn fish every second
-setInterval(spawnFish, 1000);
+// spawn 1 fish every 5 seconds
+setInterval(spawnFish, 5000);
 </script>
 
 </body>
